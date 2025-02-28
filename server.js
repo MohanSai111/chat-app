@@ -4,6 +4,7 @@ import cors from 'cors';
 import http from 'http';
 import { connect } from './config.js';
 import { chatModel } from './chat.schema.js';
+import { timeStamp } from 'console';
 
 const app= express();
 //1.create a http server
@@ -22,8 +23,16 @@ const io = new Server( server,{
 
 io.on('connection',(socket)=>{
     console.log(" connection is established");
+
     socket.on("join",(data)=>{
         socket.username= data;
+        //send old messages to the client
+        chatModel.find().sort({timeStamp:1}).limit(50)
+            .then(messages=>{
+                socket.emit("load_messages",messages);
+            }).catch(err=>{
+                console.log(err);
+            })
     })
 
     socket.on("new-message",(message)=>{
